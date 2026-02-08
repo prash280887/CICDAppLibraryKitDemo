@@ -43,5 +43,14 @@ module appserviceModule 'modules/appservices.bicep' = {
     appServicePlanSku: 'P1v2'
     location: location
   }
-  
+
 }
+
+@description('appService appServiceName')
+output appServiceDefaultHostName string = appserviceModule.outputs.appServiceName
+
+@description('appService Id')
+output appServiceId string = appserviceModule.outputs.appServiceId
+
+@description('appService Plan Id')
+output appServicePlanId string = appserviceModule.outputs.appServicePlanId
