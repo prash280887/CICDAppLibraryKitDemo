@@ -1,8 +1,6 @@
 using './main.bicep'
 
-var environment = 'dev'
-
-param storageAccountName = 'stgmyappdev${uniqueString(resourceGroup().name)}'
+param storageAccountName = 'stgmyappdevdev001'
 param location = 'eastus'
 param storageSku = 'Standard_LRS'
 

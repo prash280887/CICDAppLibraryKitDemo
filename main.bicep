@@ -33,3 +33,15 @@ output storageAccountName string = storageModule.outputs.storageAccountName
 
 @description('Blob endpoint')
 output blobEndpoint string = storageModule.outputs.blobEndpoint
+
+
+module appserviceModule 'modules/appservices.bicep' = {
+  name: 'app-${uniqueString(resourceGroup().id)}'
+  params: {
+    appServiceName: 'myappdev${uniqueString(resourceGroup().name)}'
+    appServicePlanName: 'planmyappdev${uniqueString(resourceGroup().name)}'
+    appServicePlanSku: 'P1v2'
+    location: location
+  }
+  
+}
