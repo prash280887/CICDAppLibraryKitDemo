@@ -61,7 +61,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
   properties: {
     accessTier: accessTier
-    httpsOnly: httpsOnly
     minimumTlsVersion: minimumTlsVersion
     supportsHttpsTrafficOnly: httpsOnly
   }
@@ -77,6 +76,3 @@ output storageAccountName string = storageAccount.name
 
 @description('Blob endpoint')
 output blobEndpoint string = storageAccount.properties.primaryEndpoints.blob
-
-@description('Primary connection string')
-output primaryConnectionString string = 'DefaultEndpointProtocol=https;AccountName=${storageAccount.name};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value};EndpointSuffix=core.windows.net'

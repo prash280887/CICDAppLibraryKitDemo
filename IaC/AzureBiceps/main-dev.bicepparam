@@ -1,4 +1,4 @@
-using './main.bicep'
+using 'main.bicep'
 
 param storageAccountName = 'stgmyappdevdev001'
 param location = 'eastus'
