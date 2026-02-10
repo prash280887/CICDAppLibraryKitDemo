@@ -1,0 +1,138 @@
+pipeline {
+    agent {
+        label 'linux'
+    }
+    
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+    
+    parameters {
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'prod'],
+            description: 'Deployment environment'
+        )
+    }
+    
+    environment {
+        AZURE_SUBSCRIPTION_ID = credentials('AZURE_SUBSCRIPTION_ID')
+        AZURE_TENANT_ID = credentials('AZURE_TENANT_ID')
+        AZURE_CLIENT_ID = credentials('AZURE_CLIENT_ID')
+        AZURE_CLIENT_SECRET = credentials('AZURE_CLIENT_SECRET')
+        BICEP_PATH = 'IaC/AzureBiceps'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Branch: ${env.GIT_BRANCH}"
+            }
+        }
+        
+        stage('Determine Environment') {
+            steps {
+                script {
+                    if (env.GIT_BRANCH == 'main' || env.ENVIRONMENT == 'prod') {
+                        env.PARAMS_FILE = 'main-prod.bicepparam'
+                        env.RESOURCE_GROUP = 'rg-myapp-prod'
+                        env.LOCATION = 'eastus'
+                        echo "🔴 Production environment selected"
+                    } else {
+                        env.PARAMS_FILE = 'main-dev.bicepparam'
+                        env.RESOURCE_GROUP = 'rg-myapp-dev'
+                        env.LOCATION = 'eastus'
+                        echo "🟢 Development environment selected"
+                    }
+                }
+            }
+        }
+        
+        stage('Azure Login') {
+            steps {
+                script {
+                    sh '''
+                        az login \
+                            --service-principal \
+                            -u ${AZURE_CLIENT_ID} \
+                            -p ${AZURE_CLIENT_SECRET} \
+                            --tenant ${AZURE_TENANT_ID}
+                        
+                        az account set --subscription ${AZURE_SUBSCRIPTION_ID}
+                        echo "✓ Successfully authenticated to Azure"
+                    '''
+                }
+            }
+        }
+        
+        stage('Validate Bicep') {
+            steps {
+                script {
+                    sh '''
+                        cd ${BICEP_PATH}
+                        az bicep build --file main.bicep
+                        echo "✓ Bicep template validation successful"
+                    '''
+                }
+            }
+        }
+        
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    sh '''
+                        if [ ! -f "${BICEP_PATH}/${PARAMS_FILE}" ]; then
+                            echo "❌ Parameter file not found: ${PARAMS_FILE}"
+                            exit 1
+                        fi
+                        echo "✓ Parameter file found: ${PARAMS_FILE}"
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy Bicep') {
+            steps {
+                script {
+                    sh '''
+                        echo "🚀 Starting deployment..."
+                        
+                        # Create resource group if it doesn't exist
+                        az group create \
+                            --name ${RESOURCE_GROUP} \
+                            --location ${LOCATION}
+                        
+                        # Deploy Bicep template
+                        az deployment group create \
+                            --name "bicep-deploy-$(date +%s)" \
+                            --resource-group ${RESOURCE_GROUP} \
+                            --template-file ${BICEP_PATH}/main.bicep \
+                            --parameters ${BICEP_PATH}/${PARAMS_FILE}
+                        
+                        echo "✓ Deployment completed successfully"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                echo "Pipeline execution completed"
+            }
+        }
+        success {
+            echo "✓ Deployment successful!"
+        }
+        failure {
+            echo "❌ Deployment failed!"
+        }
+        cleanup {
+            cleanWs()
+        }
+    }
+}

@@ -1,0 +1,120 @@
+## Groovy script for Jenkins Pipeline to deploy Terraform infrastructure
+pipeline {
+  agent any
+
+  parameters {
+    choice(
+      name: 'TERRAFORM_ACTION',
+      choices: ['plan', 'apply', 'destroy'],
+      description: 'Terraform action to perform'
+    )
+    string(
+      name: 'TERRAFORM_DIR',
+      defaultValue: './Terraform',
+      description: 'Path to Terraform configuration directory'
+    )
+  }
+
+  environment {
+    TERRAFORM_VERSION = '1.5.0'
+    TF_IN_AUTOMATION = 'true'
+    AZURE_SUBSCRIPTION_ID = credentials('AZURE_SUBSCRIPTION_ID')
+    AZURE_TENANT_ID = credentials('AZURE_TENANT_ID')
+    AZURE_CLIENT_ID = credentials('AZURE_CLIENT_ID')
+    AZURE_CLIENT_SECRET = credentials('AZURE_CLIENT_SECRET')
+    TERRAFORM_PATH = 'IaC/Terraform'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        echo "Branch: ${env.GIT_BRANCH}"
+      }
+    }
+
+    stage('Azure Login') {
+      steps {
+        script {
+          sh '''
+            az login \
+              --service-principal \
+              -u ${AZURE_CLIENT_ID} \
+              -p ${AZURE_CLIENT_SECRET} \
+              --tenant ${AZURE_TENANT_ID}
+            
+            az account set --subscription ${AZURE_SUBSCRIPTION_ID}
+            echo "✓ Successfully authenticated to Azure"
+          '''
+        }
+      }
+    }
+
+    stage('Terraform Init') {
+      steps {
+        dir("${params.TERRAFORM_DIR}") {
+          sh 'terraform init'
+        }
+      }
+    }
+
+    stage('Terraform Validate') {
+      steps {
+        dir("${params.TERRAFORM_DIR}") {
+          sh 'terraform validate'
+        }
+      }
+    }
+
+    stage('Terraform Format Check') {
+      steps {
+        dir("${params.TERRAFORM_DIR}") {
+          sh 'terraform fmt -check -recursive'
+        }
+      }
+    }
+
+    stage('Terraform Plan') {
+      steps {
+        dir("${params.TERRAFORM_DIR}") {
+          sh 'terraform plan -out=tfplan'
+          sh 'terraform show -json tfplan > tfplan.json'
+        }
+      }
+    }
+
+    stage('Terraform Apply') {
+      when {
+        expression { params.TERRAFORM_ACTION == 'apply' }
+      }
+      steps {
+        dir("${params.TERRAFORM_DIR}") {
+          sh 'terraform apply -auto-approve tfplan'
+        }
+      }
+    }
+
+    stage('Terraform Destroy') {
+      when {
+        expression { params.TERRAFORM_ACTION == 'destroy' }
+      }
+      steps {
+        dir("${params.TERRAFORM_DIR}") {
+          sh 'terraform destroy -auto-approve'
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      cleanWs()
+    }
+    failure {
+      echo '❌ Terraform deployment failed!'
+    }
+    success {
+      echo '✓ Terraform deployment completed successfully!'
+    }
+  }
+}
