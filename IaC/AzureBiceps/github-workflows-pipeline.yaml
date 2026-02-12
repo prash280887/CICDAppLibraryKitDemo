@@ -42,5 +42,5 @@ jobs:
           scope: resourcegroup
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ env.RESOURCE_GROUP }}
-          template: ./main.bicep
-          parameters: ./${{ env.PARAMS_FILE }}
+          template: ./IaC/AzureBiceps/main.bicep
+          parameters: ./IaC/AzureBiceps/${{ env.PARAMS_FILE }}
