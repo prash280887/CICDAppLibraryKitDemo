@@ -33,10 +33,10 @@ jobs:
       - name: Set environment variables
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "PARAMS_FILE=IaC/AzureBiceps/main.prod.bicepparam" >> $GITHUB_ENV
+            echo "PARAMS_FILE=main.prod.bicepparam" >> $GITHUB_ENV
             echo "RESOURCE_GROUP=rgmyappprod " >> $GITHUB_ENV
           else
-            echo "PARAMS_FILE=IaC/AzureBiceps/main.dev.bicepparam" >> $GITHUB_ENV
+            echo "PARAMS_FILE=main.dev.bicepparam" >> $GITHUB_ENV
             echo "RESOURCE_GROUP=rgmyappdev" >> $GITHUB_ENV
           fi
 
@@ -47,4 +47,4 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ env.RESOURCE_GROUP }}
           template: ./IaC/AzureBiceps/main.bicep
-          parameters: ./${{ env.PARAMS_FILE }}
+          parameters: ./IaC/AzureBiceps/${{ env.PARAMS_FILE }}
