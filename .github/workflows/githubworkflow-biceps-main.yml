@@ -1,12 +1,3 @@
-# Add in Github -settings - secrets and variable -- new secret AZURE_CREDENTIALS as json  appreg props and value:
-#Eg. {
-#   "clientId": "",
-#   "clientSecret": "",
-#   "subscriptionId": "",
-#   "tenantId": ""
-# }
-
-
 name: Deploy Azure Bicep
 on:
   push:
