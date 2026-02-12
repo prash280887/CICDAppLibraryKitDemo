@@ -38,7 +38,7 @@ pipeline {
                 script {
                     if (env.GIT_BRANCH == 'main' || env.ENVIRONMENT == 'prod') {
                         env.PARAMS_FILE = 'main-prod.bicepparam'
-                        env.RESOURCE_GROUP = 'rg-myapp-prod'
+                        env.RESOURCE_GROUP = 'rgmyappprod '
                         env.LOCATION = 'eastus'
                         echo "🔴 Production environment selected"
                     } else {

@@ -26,10 +26,10 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "PARAMS_FILE=main.prod.bicepparam" >> $GITHUB_ENV
-            echo "RESOURCE_GROUP=rg-myapp-prod" >> $GITHUB_ENV
+            echo "RESOURCE_GROUP=rgmyappprod " >> $GITHUB_ENV
           else
             echo "PARAMS_FILE=main.dev.bicepparam" >> $GITHUB_ENV
-            echo "RESOURCE_GROUP=rg-myapp-dev" >> $GITHUB_ENV
+            echo "RESOURCE_GROUP=rgmyappdev" >> $GITHUB_ENV
           fi
 
 
