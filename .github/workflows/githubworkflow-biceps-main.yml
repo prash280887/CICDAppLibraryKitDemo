@@ -12,7 +12,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    #environment:  ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
     
     steps:
       - uses: actions/checkout@v4
