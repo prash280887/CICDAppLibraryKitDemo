@@ -31,14 +31,30 @@ stages:
         steps:
           - checkout: self
 
-          - task: AzureLogin@v2
-            displayName: 'Azure Login'
+          # - task: AzureLogin@v2
+          #   displayName: 'Azure Login'
+          #   inputs:
+          #     authenticationType: 'servicePrincipal'
+          #     clientId: $(AZURE_CLIENT_ID)
+          #     tenantId: $(AZURE_TENANT_ID)
+          #     subscriptionId: $(AZURE_SUBSCRIPTION_ID)
+          #     clientSecret: $(AZURE_CLIENT_SECRET)
+
+          - task: AzureCLI@2
+            displayName: "Azure CLI Login with SPN"
             inputs:
-              authenticationType: 'servicePrincipal'
-              clientId: $(AZURE_CLIENT_ID)
-              tenantId: $(AZURE_TENANT_ID)
-              subscriptionId: $(AZURE_SUBSCRIPTION_ID)
-              clientSecret: $(AZURE_CLIENT_SECRET)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "Logging into Azure..."
+
+                az login --service-principal \
+                  --username $(AZURE_CLIENT_ID) \
+                  --password $(AZURE_CLIENT_SECRET) \
+                  --tenant $(AZURE_TENANT_ID)
+
+                az account set --subscription $(AZURE_SUBSCRIPTION_ID)
+                az account show
 
           # Determine which parameter file to use based on branch
           - task: Bash@3
